@@ -4,4 +4,3 @@ numpy
 sqlite3
 matplotlib
 streamlit
-streamlit plotly
