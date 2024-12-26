@@ -35,8 +35,6 @@ def load_session(year, race):
     }
     cursor.close()
     return race_details
-    # d1 = input("Charles Leclerc")
-    # d2 = input("Lando Norris")
 
 
 def plot_chart(
@@ -45,20 +43,28 @@ def plot_chart(
     year,
     race,
 ):
-    print(d1)
+    # print(d1)
     # session.results
     cursor = connection()
 
     # with st.form("Save periods"):
     driver_name = cursor.execute(
-        f"select DriverNumber,FullName  from qualification_results where year = year and RaceName = '{race}' and (FullName in ('{d1}' ,'{d2}'))"
+        f"select DriverNumber,FullName  from qualification_results where year = {year} and RaceName = '{race}' and FullName = '{d1}' "
     ).fetchall()
-    print(driver_name)
+    # print(driver_name)
     columns = [desc[0] for desc in cursor.description]
-    print(columns)
-    # Convert to DataFrame
     drivers_df = pd.DataFrame(driver_name, columns=columns)
-    print(drivers_df)
+    driver_name = cursor.execute(
+        f"select DriverNumber,FullName  from qualification_results where year = {year} and RaceName = '{race}' and FullName = '{d2}' "
+    ).fetchall()
+    # print(driver_name)
+    columns = [desc[0] for desc in cursor.description]
+    # print(columns)
+    # Convert to DataFrame
+    drivers_df = pd.concat(
+        [drivers_df, pd.DataFrame(driver_name, columns=columns)]
+    ).reset_index()
+    # print(drivers_df)
     distance_min, distance_max = (
         0,
         cursor.execute(
@@ -84,8 +90,8 @@ def plot_chart(
 
         columns = [desc[0] for desc in cursor.description]
         telemetry_df = pd.DataFrame(telemetry_data, columns=columns)
-        print("printing telemetry df")
-        print(telemetry_df)
+        # print("printing telemetry df")
+        # print(telemetry_df)
         data["telemetry_driver"].append(telemetry_df)
         print(data)
         data["team_driver"].append(telemetry_df.loc[0, "TeamName"])
