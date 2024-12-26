@@ -132,6 +132,12 @@ if st.session_state.driver2 and st.session_state.driver1:
             "Brake": "red",
         }
 
+        action_labels = {
+            "Brake": 200,
+            "Cornering": 200,
+            "Full Throttle": 200,
+        }  # Assign numerical values
+
         # Plotly figure
         fig = go.Figure()
         st.write(data["telemetry_driver"][0])
@@ -185,13 +191,38 @@ if st.session_state.driver2 and st.session_state.driver1:
         #             )
         #         )
         #         previous_action_end += action["DistanceDelta"]
+        bar_colors = [
+            telemetry_colors[v] for v in data["telemetry_driver"][0]["CurrentAction"]
+        ]
+        action_values = [
+            action_labels[a] for a in data["telemetry_driver"][0]["CurrentAction"]
+        ]
 
+        fig.add_trace(
+            go.Bar(
+                x=data["telemetry_driver"][0]["Distance"],
+                y=action_values,
+                name="Actions",
+                marker=dict(color=bar_colors),
+                width=20,  # Adjust bar width for better visibility
+            )
+        )
+        # col1, col2 = st.columns([1, 1])
+        st.write(data["telemetry_driver"][0]["Distance"])
+        st.write(data["telemetry_driver"][0]["CurrentAction"])
         # Style adjustments
         fig.update_layout(
             title="F1 Telemetry: Speed Over Distance",
             xaxis_title="Distance (m)",
             yaxis_title="Speed (kmph)",
-            barmode="relative",
+            yaxis2=dict(
+                title="Actions",
+                overlaying="y",
+                side="right",
+                range=[-200, 200],  # Keep range small for clarity
+                showgrid=False,
+            ),
+            barmode="overlay",  # ['stack', 'group', 'overlay', 'relative']
             showlegend=True,
             legend_title="Telemetry Actions",
             legend=dict(
@@ -211,5 +242,6 @@ if st.session_state.driver2 and st.session_state.driver1:
         fig.update_xaxes(range=[distance_min, distance_max])
 
         # Streamlit display
+
         st.title("Driver Telemetry Analysis")
         st.plotly_chart(fig, use_container_width=True)
