@@ -71,6 +71,18 @@ def speed_along_track_plot(d1, d2, year, race):
     y = np.array(telemetry_data["Y"].values)
     fastest_driver_array = telemetry_data["Fastest_driver_int"].to_numpy().astype(float)
 
+    pc_driver1 = round(
+        telemetry_data[telemetry_data["Fastest_driver"] == d1].shape[0]
+        * 100
+        / telemetry_data.shape[0]
+    )
+    pc_driver2 = round(
+        telemetry_data[telemetry_data["Fastest_driver"] == d2].shape[0]
+        * 100
+        / telemetry_data.shape[0]
+    )
+    # Add a widget in the bottom left corner to show the percentage of time each driver was fastest
+
     # Generate line segments
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
@@ -125,7 +137,21 @@ def speed_along_track_plot(d1, d2, year, race):
                 name=driver,
             )
         )
-
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0,
+        y=0.1,
+        text=f"{d1}: {pc_driver1}%<br>{d2}: {pc_driver2}%",
+        showarrow=False,
+        align="left",
+        font=dict(size=12),
+        bordercolor="White",
+        borderwidth=1,
+        borderpad=4,
+        # bgcolor="white",
+        opacity=1,
+    )
     # Adjust axis settings
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)

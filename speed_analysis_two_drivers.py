@@ -110,9 +110,9 @@ def speed_telemetry_plot(
     cursor.close()
 
     if data["avg_speed_driver"][0] > data["avg_speed_driver"][1]:
-        speed_text = f"{drivers_df['FullName'][0]} {round(data['avg_speed_driver'][0] - data['avg_speed_driver'][1],2)} km/h faster"
+        speed_text = f"{drivers_df['FullName'][0]} faster by {round(data['avg_speed_driver'][0] - data['avg_speed_driver'][1],2)} km/h on average"
     else:
-        speed_text = f"{drivers_df['FullName'][1]} {round(data['avg_speed_driver'][1] - data['avg_speed_driver'][0],2)} km/h faster"
+        speed_text = f"{drivers_df['FullName'][1]} faster by {round(data['avg_speed_driver'][1] - data['avg_speed_driver'][0],2)} km/h on average"
 
     all_actions = pd.concat(
         [
@@ -126,7 +126,7 @@ def speed_telemetry_plot(
 
     distance_min = 0
     distance_max = distance_max
-    speed_text = "Speed Comparison"
+    # speed_text = "Speed Comparison"
 
     corner_info = get_corner_info(race, year)
     telemetry_colors = {
@@ -195,7 +195,21 @@ def speed_telemetry_plot(
     # fig.add_annotation(
     #     x=distance_min + 15, y=200, text=speed_text, showarrow=False, font=dict(size=15)
     # )
-
+    fig.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0,
+        y=0.1,  # Moved upwards
+        text=f"{speed_text}",
+        showarrow=False,
+        align="left",
+        font=dict(size=12),
+        bordercolor="White",
+        borderwidth=1,
+        borderpad=4,
+        # bgcolor="white",
+        opacity=1,
+    )
     # Zoom in on the specific part
     fig.update_xaxes(range=[distance_min, distance_max])
     return fig
