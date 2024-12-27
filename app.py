@@ -1,11 +1,11 @@
 import sqlite3 as s3
+import threading
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
-
-from speed_analysis_two_drivers import load_session, plot_chart
-from utils import get_corner_info, get_race_drivers
+from speed_along_track_two_drivers import speed_along_track_plot
+from speed_analysis_two_drivers import speed_telemetry_plot
+from utils import get_corner_info, get_race_drivers, run_in_parallel
 
 st.header("Data Vis")
 
@@ -114,134 +114,24 @@ if st.session_state.driver2 and st.session_state.driver1:
     if driver1 == driver2:
         st.warning("Select Different Drivers")
     else:
-        all_actions, data, distance_max = plot_chart(driver1, driver2, year, race)
-        with st.expander(label="Expand to see All Actions"):
-            st.dataframe(all_actions)
 
-        driver1 = driver1
-        driver2 = driver2
-        st.write(f"driver 1 is {driver1}")
-        st.write(f"driver 2 is {driver2}")
-        distance_min = 0
-        distance_max = distance_max
-        speed_text = "Speed Comparison"
-
-        telemetry_colors = {
-            "Full Throttle": "green",
-            "Cornering": "grey",
-            "Brake": "red",
-        }
-
-        action_labels = {
-            "Brake": 200,
-            "Cornering": 200,
-            "Full Throttle": 200,
-        }  # Assign numerical values
-
-        # Plotly figure
-        fig = go.Figure()
-        st.write(data["telemetry_driver"][0])
-        st.write(data["telemetry_driver"][1])
-        # Lineplot for Speed
-        fig.add_trace(
-            go.Scatter(
-                x=data["telemetry_driver"][0]["Distance"],
-                y=data["telemetry_driver"][0]["Speed"],
-                mode="lines",
-                name=driver1,
-                line=dict(color=f'#{data["telemetry_driver"][0]["TeamColor"][0]}'),
-            )
+        fig_speed_telemetry_plot, fig_speed_along_track_plot = run_in_parallel(
+            [speed_telemetry_plot, speed_along_track_plot], driver1, driver2, year, race
         )
-
-        fig.add_trace(
-            go.Scatter(
-                x=data["telemetry_driver"][1]["Distance"],
-                y=data["telemetry_driver"][1]["Speed"],
-                mode="lines",
-                name=driver2,
-                line=dict(color=f'#{data["telemetry_driver"][1]["TeamColor"][0]}'),
-            )
-        )
-        for index, item in enumerate(corner_info):
-            fig.add_vline(
-                x=item[0],
-                line_dash="dash",
-                line_color="rgba(255, 255, 255, 0.5)",  # Off-white with 50% opacity
-                annotation_text=f"C {index+1}",
-                annotation_position=(
-                    "top left" if index % 2 == 0 else "bottom left"
-                ),  # Alternate positions
-                annotation_font_size=10,  # Optional: Adjust font size for clarity
-                opacity=0.5,  # Set line opacity to 50%
-            )
-
-        # # Horizontal Barplot for Telemetry
-        # for driver in [driver1, driver2]:
-        #     driver_actions = all_actions.loc[all_actions["Driver"] == driver]
-        #     previous_action_end = 0
-        #     for _, action in driver_actions.iterrows():
-        #         fig.add_trace(
-        #             go.Bar(
-        #                 x=[action["DistanceDelta"]],
-        #                 y=[driver],
-        #                 orientation="h",
-        #                 base=[previous_action_end],
-        #                 marker=dict(color=telemetry_colors[action["CurrentAction"]]),
-        #                 name=action["CurrentAction"],
-        #             )
-        #         )
-        #         previous_action_end += action["DistanceDelta"]
-        bar_colors = [
-            telemetry_colors[v] for v in data["telemetry_driver"][0]["CurrentAction"]
-        ]
-        action_values = [
-            action_labels[a] for a in data["telemetry_driver"][0]["CurrentAction"]
-        ]
-
-        fig.add_trace(
-            go.Bar(
-                x=data["telemetry_driver"][0]["Distance"],
-                y=action_values,
-                name="Actions",
-                marker=dict(color=bar_colors),
-                width=20,  # Adjust bar width for better visibility
-            )
-        )
-        # col1, col2 = st.columns([1, 1])
-        st.write(data["telemetry_driver"][0]["Distance"])
-        st.write(data["telemetry_driver"][0]["CurrentAction"])
-        # Style adjustments
-        fig.update_layout(
-            title="F1 Telemetry: Speed Over Distance",
-            xaxis_title="Distance (m)",
-            yaxis_title="Speed (kmph)",
-            yaxis2=dict(
-                title="Actions",
-                overlaying="y",
-                side="right",
-                range=[-200, 200],  # Keep range small for clarity
-                showgrid=False,
-            ),
-            barmode="overlay",  # ['stack', 'group', 'overlay', 'relative']
-            showlegend=True,
-            legend_title="Telemetry Actions",
-            legend=dict(
-                orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5
-            ),
-            width=1000,
-            height=600,
-            template="plotly_white",
-        )
-
-        # Highlight Speed Difference
-        # fig.add_annotation(
-        #     x=distance_min + 15, y=200, text=speed_text, showarrow=False, font=dict(size=15)
-        # )
-
-        # Zoom in on the specific part
-        fig.update_xaxes(range=[distance_min, distance_max])
+        # with st.expander(label="Expand to see All Actions"):
+        #     st.dataframe(all_actions)
 
         # Streamlit display
-
         st.title("Driver Telemetry Analysis")
-        st.plotly_chart(fig, use_container_width=True)
+        try:
+            st.plotly_chart(fig_speed_telemetry_plot, use_container_width=True)
+        except Exception as e:
+            st.error(f"An error occurred while generating the plots: {e}")
+
+        try:
+            st.plotly_chart(fig_speed_along_track_plot, use_container_width=True)
+        except Exception as e:
+            st.error(f"An error occurred while generating the plots: {e}")
+        # col1, col2 = st.columns(2)
+        # col1.plotly_chart(fig_speed_telemetry_plot, use_container_width=True)
+        # col2.plotly_chart(fig_speed_along_track_plot, use_container_width=True)
