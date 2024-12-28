@@ -11,11 +11,14 @@ from utils import (
 )
 
 
-def speed_along_track_plot(d1, d2, year, race):
+def speed_along_track_plot(d1, d2, year, race, q1, q2):
 
     cursor = connection()
     telemetry_data = cursor.execute(
-        f"select *  from car_telemetry_{year} where year = {year} and RaceName = '{race}' and FullName in ('{d1}', '{d2}') "
+        f"""select *  from telemetry_data_{year} 
+            where year = {year} and RaceName = '{race}' 
+            and ((FullName = '{d1}' and qualification_session = '{q1}') 
+            or (FullName = '{d2}' and qualification_session = '{q2}')) """
     ).fetchall()
 
     columns = [desc[0] for desc in cursor.description]
@@ -137,6 +140,24 @@ def speed_along_track_plot(d1, d2, year, race):
                 name=driver,
             )
         )
+
+    fig.update_layout(
+        title=f"Speed Over Track",
+        # margin=dict(l=20, r=50, t=30, b=20),
+        showlegend=True,
+        xaxis=dict(scaleanchor="y", scaleratio=1),  # Equal scaling
+        width=1000,
+        height=600,
+        template="plotly_white",
+        legend=dict(
+            x=1,
+            y=0.5,
+            xanchor="left",
+            yanchor="middle",
+        ),
+    )
+    fig.update_xaxes(visible=False)
+    fig.update_yaxes(visible=False)
     fig.add_annotation(
         xref="paper",
         yref="paper",
@@ -151,23 +172,6 @@ def speed_along_track_plot(d1, d2, year, race):
         borderpad=4,
         # bgcolor="white",
         opacity=1,
-    )
-    # Adjust axis settings
-    fig.update_xaxes(visible=False)
-    fig.update_yaxes(visible=False)
-    fig.update_layout(
-        showlegend=True,
-        xaxis=dict(scaleanchor="y", scaleratio=1),  # Equal scaling
-        title=f"Speed Over Track",
-        width=1000,
-        height=600,
-        template="plotly_white",
-        legend=dict(
-            x=1,
-            y=0.5,
-            xanchor="left",
-            yanchor="middle",
-        ),
     )
 
     return fig

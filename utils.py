@@ -61,6 +61,7 @@ def adjust_color_if_needed(color1, color2):
             int(new_color2_rgb[1] * 255),
             int(new_color2_rgb[2] * 255),
         )
+        adjust_color_if_needed(color1, new_color2_hex)
         return color1, new_color2_hex
     return color1, color2
 
@@ -70,17 +71,17 @@ def thread_wrapper(func, args, result_holder, index):
 
 
 # Launch in parallel
-def run_in_parallel(function_list, driver1, driver2, year, race):
+def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2):
     results = [None, None]  # To hold the results of the threads
 
     # Create threads
     thread1 = threading.Thread(
         target=thread_wrapper,
-        args=(function_list[0], (driver1, driver2, year, race), results, 0),
+        args=(function_list[0], (driver1, driver2, year, race, q1, q2), results, 0),
     )
     thread2 = threading.Thread(
         target=thread_wrapper,
-        args=(function_list[1], (driver1, driver2, year, race), results, 1),
+        args=(function_list[1], (driver1, driver2, year, race, q1, q2), results, 1),
     )
 
     # Start threads

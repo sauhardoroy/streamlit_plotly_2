@@ -12,13 +12,7 @@ from utils import (
 )
 
 
-def speed_telemetry_plot(
-    d1,
-    d2,
-    year,
-    race,
-):
-
+def speed_telemetry_plot(d1, d2, year, race, q1, q2):
     cursor = connection()
 
     driver_name = cursor.execute(
@@ -51,12 +45,13 @@ def speed_telemetry_plot(
         "actions_driver": [],
         "avg_speed_driver": [],
     }
+    qualification_list = [q1, q2]
     for index, dri_det in drivers_df.iterrows():
 
         driver_number = dri_det["DriverNumber"]
         print(driver_number)
         telemetry_data = cursor.execute(
-            f"select *  from car_data_{year} where racename= '{race}' and DriverNumber = '{driver_number}' "
+            f"select *  from car_data_{year} where racename= '{race}' and DriverNumber = '{driver_number}' and qualification_session = '{qualification_list[index]}' "
         ).fetchall()
 
         columns = [desc[0] for desc in cursor.description]
