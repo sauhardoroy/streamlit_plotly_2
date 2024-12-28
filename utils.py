@@ -72,7 +72,7 @@ def thread_wrapper(func, args, result_holder, index):
 
 # Launch in parallel
 def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2):
-    results = [None, None]  # To hold the results of the threads
+    results = [None, None, None]  # To hold the results of the threads
 
     # Create threads
     thread1 = threading.Thread(
@@ -83,14 +83,20 @@ def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2):
         target=thread_wrapper,
         args=(function_list[1], (driver1, driver2, year, race, q1, q2), results, 1),
     )
+    thread3 = threading.Thread(
+        target=thread_wrapper,
+        args=(function_list[2], (driver1, driver2, year, race, q1, q2), results, 2),
+    )
 
     # Start threads
     thread1.start()
     thread2.start()
+    thread3.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
+    thread3.join()
 
     return results
 

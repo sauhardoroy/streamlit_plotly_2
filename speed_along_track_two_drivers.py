@@ -44,19 +44,28 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
     telemetry_data["Minisector"] = telemetry_data["Distance"].apply(
         lambda dist: (int((dist // minisector_length) + 1))
     )
-
+    # print(f"""1 \n {telemetry_data}""")
     average_speed = (
-        telemetry_data.groupby(["Minisector", "FullName"])["Speed"].mean().reset_index()
+        telemetry_data.groupby(["Minisector", "FullName", "qualification_session"])[
+            "Speed"
+        ]
+        .mean()
+        .reset_index()
     )
-
+    # print(f"""2 \n {average_speed}""")
     # Select the driver with the highest average speed
     fastest_driver = average_speed.loc[
         average_speed.groupby(["Minisector"])["Speed"].idxmax()
     ]
-    # fastest_driver
-    # Get rid of the speed column and rename the driver column
-    fastest_driver = fastest_driver[["Minisector", "FullName"]].rename(
-        columns={"FullName": "Fastest_driver"}
+    # print(f"""3 \n {fastest_driver}""")
+
+    fastest_driver = fastest_driver[
+        ["Minisector", "FullName", "qualification_session"]
+    ].rename(
+        columns={
+            "FullName": "Fastest_driver",
+            "qualification_session": "fastest_qualification_session",
+        }
     )
 
     # Join the fastest driver per minisector with the full telemetry
@@ -64,46 +73,66 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
 
     # Order the data by distance to make matploblib does not get confused
     telemetry_data = telemetry_data.sort_values(by=["Distance"])
-
+    # print(
+    #     f"""4 \n {telemetry_data[['Minisector','FullName','fastest_qualification_session','Distance']]}"""
+    # )
     # Convert driver name to integer
-    telemetry_data.loc[telemetry_data["Fastest_driver"] == d1, "Fastest_driver_int"] = 1
-    telemetry_data.loc[telemetry_data["Fastest_driver"] == d2, "Fastest_driver_int"] = 2
-
+    telemetry_data.loc[
+        (telemetry_data["Fastest_driver"] == d1)
+        & (telemetry_data["fastest_qualification_session"] == q1),
+        "Fastest_driver_int",
+    ] = 1
+    telemetry_data.loc[
+        (telemetry_data["Fastest_driver"] == d2)
+        & (telemetry_data["fastest_qualification_session"] == q2),
+        "Fastest_driver_int",
+    ] = 2
+    # print(
+    #     f"telemetry with faster dirver int {telemetry_data[['Minisector','FullName','fastest_qualification_session','Distance']]}"
+    # )
     # Prepare data
     x = np.array(telemetry_data["X"].values)
     y = np.array(telemetry_data["Y"].values)
     fastest_driver_array = telemetry_data["Fastest_driver_int"].to_numpy().astype(float)
-
+    # print("ran till 5")
     pc_driver1 = round(
-        telemetry_data[telemetry_data["Fastest_driver"] == d1].shape[0]
+        telemetry_data[
+            (telemetry_data["Fastest_driver"] == d1)
+            & (telemetry_data["fastest_qualification_session"] == q1)
+        ].shape[0]
         * 100
         / telemetry_data.shape[0]
     )
     pc_driver2 = round(
-        telemetry_data[telemetry_data["Fastest_driver"] == d2].shape[0]
+        telemetry_data[
+            (telemetry_data["Fastest_driver"] == d2)
+            & (telemetry_data["fastest_qualification_session"] == q2)
+        ].shape[0]
         * 100
         / telemetry_data.shape[0]
     )
     # Add a widget in the bottom left corner to show the percentage of time each driver was fastest
-
+    # print(f""" pc_driver1 {pc_driver1}""")
     # Generate line segments
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
     # Create the color mapping
-    d1_colour = telemetry_data[telemetry_data["FullName"] == d1]["TeamColor"].iloc[0]
-    d2_colour = telemetry_data[telemetry_data["FullName"] == d2]["TeamColor"].iloc[0]
-
+    d1_colour = (
+        f'#{telemetry_data[telemetry_data["FullName"] == d1]["TeamColor"].iloc[0]}'
+    )
+    d2_colour = (
+        f'#{telemetry_data[telemetry_data["FullName"] == d2]["TeamColor"].iloc[0]}'
+    )
+    # print("ran till 6")
     d1_colour, d2_colour = adjust_color_if_needed(d1_colour, d2_colour)
-    print(f"Adjusted colors: {d1_colour}, {d2_colour}")
-    color_scale = [
-        hex_check_convert(d1_colour),
-        hex_check_convert(d2_colour),
-    ]
+    # print(f"Adjusted colors: {d1_colour}, {d2_colour}")
+    color_scale = [d1_colour, d2_colour]
+    # print(f"color scale {color_scale}")
     driver1 = normalize_string(d1)
     driver2 = normalize_string(d2)
-    custom_tick_labels = [f"{driver1}", f"{driver2}"]
-
+    custom_tick_labels = [f"{driver1} {q1}", f"{driver2} {q2}"]
+    # print(f"fastest driver array{fastest_driver_array}")
     color_mapping = np.vectorize(lambda x: color_scale[int(x) - 1])(
         fastest_driver_array
     ).tolist()

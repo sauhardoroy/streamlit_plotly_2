@@ -49,7 +49,7 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
     for index, dri_det in drivers_df.iterrows():
 
         driver_number = dri_det["DriverNumber"]
-        print(driver_number)
+        # print(driver_number)
         telemetry_data = cursor.execute(
             f"select *  from car_data_{year} where racename= '{race}' and DriverNumber = '{driver_number}' and qualification_session = '{qualification_list[index]}' "
         ).fetchall()
@@ -57,7 +57,7 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
         columns = [desc[0] for desc in cursor.description]
         telemetry_df = pd.DataFrame(telemetry_data, columns=columns)
         data["telemetry_driver"].append(telemetry_df)
-        print(data)
+        # print(data)
         data["team_driver"].append(telemetry_df.loc[0, "TeamName"])
 
         data["telemetry_driver"][index].loc[
@@ -105,9 +105,9 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
     cursor.close()
 
     if data["avg_speed_driver"][0] > data["avg_speed_driver"][1]:
-        speed_text = f"{drivers_df['FullName'][0]} faster by {round(data['avg_speed_driver'][0] - data['avg_speed_driver'][1],2)} km/h on average"
+        speed_text = f"{qualification_list[0]} {drivers_df['FullName'][0]} faster by {round(data['avg_speed_driver'][0] - data['avg_speed_driver'][1],2)} km/h on average"
     else:
-        speed_text = f"{drivers_df['FullName'][1]} faster by {round(data['avg_speed_driver'][1] - data['avg_speed_driver'][0],2)} km/h on average"
+        speed_text = f"{qualification_list[1]} {drivers_df['FullName'][1]} faster by {round(data['avg_speed_driver'][1] - data['avg_speed_driver'][0],2)} km/h on average"
 
     all_actions = pd.concat(
         [
@@ -133,13 +133,13 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
     # Plotly figure
     fig = go.Figure()
 
-    d1_colour = data["telemetry_driver"][0]["TeamColor"][0]
-    d2_colour = data["telemetry_driver"][1]["TeamColor"][0]
+    d1_colour = f'#{data["telemetry_driver"][0]["TeamColor"][0]}'
+    d2_colour = f'#{data["telemetry_driver"][1]["TeamColor"][0]}'
     adjust_color_if_needed
     d1_colour, d2_colour = adjust_color_if_needed(d1_colour, d2_colour)
     color_scale = [
-        hex_check_convert(d1_colour),
-        hex_check_convert(d2_colour),
+        d1_colour,
+        d2_colour,
     ]
     # Lineplot for Speed
     fig.add_trace(
@@ -147,7 +147,7 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
             x=data["telemetry_driver"][0]["Distance"],
             y=data["telemetry_driver"][0]["Speed"],
             mode="lines",
-            name=driver1,
+            name=f"{driver1} {q1}",
             line=dict(color=color_scale[0]),
         )
     )
@@ -157,7 +157,7 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
             x=data["telemetry_driver"][1]["Distance"],
             y=data["telemetry_driver"][1]["Speed"],
             mode="lines",
-            name=driver2,
+            name=f"{driver2} {q2}",
             line=dict(color=color_scale[1]),
         )
     )
