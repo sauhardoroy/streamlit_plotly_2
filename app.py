@@ -58,8 +58,6 @@ def callback_true():
     st.session_state.button_clicked = "B"
 
 
-cursor = connection()
-
 for key in ["year", "race", "driver1", "driver2", "qualification1", "qualification2"]:
     st.session_state.setdefault(key, None)
 
@@ -75,6 +73,7 @@ year = col1.selectbox(
 )
 
 st.session_state.year = year
+cursor = connection(f"race_info_{year}")
 if st.session_state.button_clicked != "B":
     st.session_state.race_list = cursor.execute(
         f"select show_name, name from race_events_view where year = {st.session_state.year}"
@@ -87,10 +86,11 @@ race = col2.selectbox(
 )
 
 st.session_state.race = [
-    normalize_string(item[1]) for item in st.session_state.race_list if item[0] == race
+    item[1] for item in st.session_state.race_list if item[0] == race
 ][0]
+
 if st.session_state.button_clicked != "B":
-    st.session_state.corner_info = get_corner_info(race, year)
+    st.session_state.corner_info = get_corner_info(st.session_state.race, year)
     st.session_state.driver_list = cursor.execute(
         f"select show_name, name, qualificationround from drivers_in_race_in_year_view where racename = '{st.session_state.race}' and year = {st.session_state.year}"
     ).fetchall()

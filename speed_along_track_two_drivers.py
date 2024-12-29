@@ -13,9 +13,9 @@ from utils import (
 
 def speed_along_track_plot(d1, d2, year, race, q1, q2):
 
-    cursor = connection()
+    cursor = connection(f"{normalize_string(race.replace(' ','_'))}_{year}")
     telemetry_data = cursor.execute(
-        f"""select *  from telemetry_data_{year} 
+        f"""select *  from telemetry_data 
             where year = {year} and RaceName = '{race}' 
             and ((FullName = '{d1}' and qualification_session = '{q1}') 
             or (FullName = '{d2}' and qualification_session = '{q2}')) """

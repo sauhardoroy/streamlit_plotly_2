@@ -50,13 +50,13 @@ def find_faster_slower_df(df1, df2):
 
 def lap_plot(d1, d2, year, race, q1, q2):
 
-    cursor = connection()
+    cursor = connection(f"{normalize_string(race.replace(' ','_'))}_{year}")
 
     pos_data1 = cursor.execute(
-        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from pos_data_{year} where RaceName = '{race}' and FullName = '{d1}' and qualification_session = '{q1}' """
+        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from telemetry_data where RaceName = '{race}' and FullName = '{d1}' and qualification_session = '{q1}' """
     ).fetchall()
     pos_data2 = cursor.execute(
-        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from pos_data_{year} where RaceName = '{race}' and FullName = '{d2}' and qualification_session = '{q2}' """
+        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from telemetry_data where RaceName = '{race}' and FullName = '{d2}' and qualification_session = '{q2}' """
     ).fetchall()
 
     df1 = pd.DataFrame(

@@ -4,8 +4,8 @@ import threading
 import unicodedata
 
 
-def connection():
-    conn = s3.connect("database.sqlite3", check_same_thread=False)
+def connection(name):
+    conn = s3.connect(f"./Database/{name}.sqlite3", check_same_thread=False)
     cursor = conn.cursor()
     return cursor
 
@@ -20,8 +20,8 @@ def get_race_drivers():
 
 
 def get_corner_info(race, year):
-
-    cursor = connection()
+    # print(race.replace(" ", "_"))
+    cursor = connection(f"race_info_{year}")
 
     # with st.form("Save periods"):
     corner_info = cursor.execute(
