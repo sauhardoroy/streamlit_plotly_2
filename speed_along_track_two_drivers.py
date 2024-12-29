@@ -165,7 +165,7 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
         )
     # Customize layout
     fig.update_layout(
-        title="Continuous Lines Colored by Name",
+        title="Speed Over Track",
         # showlegend=True,
         legend_title="Names",
         width=1000,

@@ -18,7 +18,17 @@ div[data-testid="stDialog"] div[role="dialog"]:has(.big-dialog) {
 .center {
 text-align: center
 }
-</style>
+
+        .plot-container {{
+            margin: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: white;
+            max-width: 1050px;
+            overflow: hidden;
+        }}
+    </style>
 """,
     unsafe_allow_html=True,
 )
@@ -163,19 +173,21 @@ if (
     st.warning("Select Different Drivers or Different Qualifying Rounds")
 else:
     if st.session_state.button_clicked == "A":
-        fig1, fig2, fig3 = plot_dialog(
+        fig1, fig2, fig3, fig4 = plot_dialog(
             st.session_state.driver1,
             st.session_state.driver2,
             st.session_state.year,
             st.session_state.race,
             st.session_state.qualification1,
             st.session_state.qualification2,
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         )
         print("ran plotting functions")
         # if ["fig1", "fig2", "fig3"] not in st.session_state:
         st.session_state.fig1 = fig1
         st.session_state.fig2 = fig2
         st.session_state.fig3 = fig3
+        st.session_state.fig4 = fig4
 
         st.session_state.button_clicked = "B"
     if "plot_dialog" not in st.session_state:
@@ -198,7 +210,10 @@ else:
             ):
                 # print(f"inside button 1 {st.session_state.button_clicked}")
                 calling_dialog_function(
-                    st.session_state.fig1, st.session_state.fig2, st.session_state.fig3
+                    st.session_state.fig1,
+                    st.session_state.fig2,
+                    st.session_state.fig3,
+                    st.session_state.fig4,
                 )
                 # print(f"inside button 2 {st.session_state.button_clicked}")
                 # callback()
