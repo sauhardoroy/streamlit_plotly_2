@@ -9,7 +9,11 @@ from speed_vs_rpm_two_drivers import speed_vs_rpm_plot
 from utils import run_in_parallel
 
 
-@st.dialog("Data Viz", width="large")
+def callback():
+    st.session_state.button_clicked = "D"
+
+
+# @st.dialog("Data Viz", width="large")
 def dialog_function(fig1, fig2, fig3, fig4):
 
     st.html("<span class='big-dialog'>")
@@ -78,8 +82,51 @@ def plot_dialog(driver1, driver2, year, race, qualification1, qualification2, ge
 
 
 def calling_dialog_function(fig1, fig2, fig3, fig4):
-    # print(f"inside calling dialog 1 {st.session_state.button_clicked}")
-    # st.session_state.button_clicked = "A"
+
     dialog_function(fig1, fig2, fig3, fig4)
-    # print(f"inside calling dialog 2 {st.session_state.button_clicked}")
-    # st.session_state.button_clicked = False
+
+
+def plot2(figures):
+    col_count = 2  # Number of columns for plots
+    cols = st.columns(col_count)
+    # Distribute figures across columns
+
+    # st.title("Driver Telemetry Analysis")
+
+    try:
+        cols[0].plotly_chart(figures[2], use_container_width=True)
+    except Exception as e:
+        cols[0].error(f"An error occurred while generating the plots: {e}")
+    try:
+        cols[1].plotly_chart(figures[1], use_container_width=True)
+    except Exception as e:
+        cols[1].error(f"An error occurred while generating the plots: {e}")
+    col_count = 2  # Number of columns for plots
+    cols = st.columns(col_count)
+    try:
+        cols[0].plotly_chart(figures[0], use_container_width=True)
+    except Exception as e:
+        cols[0].error(f"An error occurred while generating the plots: {e}")
+    try:
+        options = cols[1].multiselect(
+            "Select Gears", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], on_change=callback
+        )
+        if options:
+            cols[1].plotly_chart(
+                speed_vs_rpm_plot(
+                    st.session_state.driver1,
+                    st.session_state.driver2,
+                    st.session_state.year,
+                    st.session_state.race,
+                    st.session_state.qualification1,
+                    st.session_state.qualification2,
+                    options,
+                ),
+                use_container_width=True,
+            )
+        else:
+            cols[1].plotly_chart(figures[3], use_container_width=True)
+        # st.markdown(fig4, unsafe_allow_html=True)
+        # st.html(fig4)
+    except Exception as e:
+        cols[1].error(f"An error occurred while generating the plots: {e}")

@@ -7,7 +7,7 @@ st.set_page_config(
     page_title="F1 News",
     layout="wide",
 )
-from custom_streamlit_utils import calling_dialog_function, plot_dialog
+from custom_streamlit_utils import calling_dialog_function, plot2, plot_dialog
 from utils import connection, get_corner_info, normalize_string
 
 st.header("Data Visualization")
@@ -56,8 +56,8 @@ st.markdown(
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(161, 156, 156, 0.1);
     text-align: center;
-    background:white;
-    color: #e10600;
+    background:grey;
+    color: #242424;
     transition: all 0.2s ease-in-out;
     }
  </style>""",
@@ -197,28 +197,32 @@ else:
         st.session_state.button_clicked = "B"
     if "plot_dialog" not in st.session_state:
         with st.container():
-            cola, colb, colc = st.columns([0.23, 0.6, 0.17])
 
             # st.header(f"Open Dashboard:")
             st.markdown(
-                '<h2 style="text-align: center;">Open Dashboard</h2>',
+                '<h2 style="text-align: left;">Open Dashboard</h2>',
                 unsafe_allow_html=True,
             )
             st.markdown(
                 '<span class = "center" id="button-after"></span>',
                 unsafe_allow_html=True,
             )
-            cola, colb, colc = st.columns([0.27, 0.6, 0.13])
-            if colb.button(
-                f"{st.session_state.driver1} {st.session_state.qualification1}, {st.session_state.driver2} {st.session_state.qualification2}",
-                on_click=callback_true,
+
+            if (
+                st.button(
+                    f"{st.session_state.driver1} {st.session_state.qualification1}, {st.session_state.driver2} {st.session_state.qualification2}",
+                    on_click=callback_true,
+                )
+                or st.session_state.button_clicked
             ):
                 # print(f"inside button 1 {st.session_state.button_clicked}")
-                calling_dialog_function(
-                    st.session_state.fig1,
-                    st.session_state.fig2,
-                    st.session_state.fig3,
-                    st.session_state.fig4,
+                plot2(
+                    [
+                        st.session_state.fig1,
+                        st.session_state.fig2,
+                        st.session_state.fig3,
+                        st.session_state.fig4,
+                    ]
                 )
                 # print(f"inside button 2 {st.session_state.button_clicked}")
                 # callback()
