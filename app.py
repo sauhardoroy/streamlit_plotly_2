@@ -2,6 +2,11 @@ import sqlite3 as s3
 
 import pandas as pd
 import streamlit as st
+
+st.set_page_config(
+    page_title="F1 News",
+    layout="wide",
+)
 from custom_streamlit_utils import calling_dialog_function, plot_dialog
 from utils import connection, get_corner_info, normalize_string
 
