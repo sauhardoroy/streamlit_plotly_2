@@ -3,17 +3,11 @@ import sqlite3 as s3
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from utils import (
-    adjust_color_if_needed,
-    connection,
-    get_corner_info,
-    hex_check_convert,
-    normalize_string,
-)
+from utils import adjust_color_if_needed, connection, get_corner_info, normalize_string
 
 
 def speed_telemetry_plot(d1, d2, year, race, q1, q2):
-    cursor = connection()
+    cursor = connection(f"race_info_{year}")
 
     driver_name = cursor.execute(
         f"select DriverNumber,FullName  from qualification_results where year = {year} and RaceName = '{race}' and FullName = '{d1}' "
@@ -30,11 +24,12 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
     drivers_df = pd.concat(
         [drivers_df, pd.DataFrame(driver_name, columns=columns)]
     ).reset_index()
-
+    cursor.close()
+    cursor = connection(f"{normalize_string(race.replace(' ','_'))}_{year}")
     distance_min, distance_max = (
         0,
         cursor.execute(
-            f"select max(distance) from car_data_{year} where RaceName = '{race}' group by racename"
+            f"select max(distance) from car_data where RaceName = '{race}' group by racename"
         ).fetchall()[0][0],
     )
 
@@ -51,7 +46,7 @@ def speed_telemetry_plot(d1, d2, year, race, q1, q2):
         driver_number = dri_det["DriverNumber"]
         # print(driver_number)
         telemetry_data = cursor.execute(
-            f"select *  from car_data_{year} where racename= '{race}' and DriverNumber = '{driver_number}' and qualification_session = '{qualification_list[index]}' "
+            f"select *  from car_data where racename= '{race}' and DriverNumber = '{driver_number}' and qualification_session = '{qualification_list[index]}' "
         ).fetchall()
 
         columns = [desc[0] for desc in cursor.description]

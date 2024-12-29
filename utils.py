@@ -4,8 +4,8 @@ import threading
 import unicodedata
 
 
-def connection():
-    conn = s3.connect("database.sqlite3", check_same_thread=False)
+def connection(name):
+    conn = s3.connect(f"./Database/{name}.sqlite3", check_same_thread=False)
     cursor = conn.cursor()
     return cursor
 
@@ -20,8 +20,8 @@ def get_race_drivers():
 
 
 def get_corner_info(race, year):
-
-    cursor = connection()
+    # print(race.replace(" ", "_"))
+    cursor = connection(f"race_info_{year}")
 
     # with st.form("Save periods"):
     corner_info = cursor.execute(
@@ -71,8 +71,8 @@ def thread_wrapper(func, args, result_holder, index):
 
 
 # Launch in parallel
-def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2):
-    results = [None, None, None]  # To hold the results of the threads
+def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2, gears):
+    results = [None, None, None, None]  # To hold the results of the threads
 
     # Create threads
     thread1 = threading.Thread(
@@ -87,16 +87,26 @@ def run_in_parallel(function_list, driver1, driver2, year, race, q1, q2):
         target=thread_wrapper,
         args=(function_list[2], (driver1, driver2, year, race, q1, q2), results, 2),
     )
-
+    thread4 = threading.Thread(
+        target=thread_wrapper,
+        args=(
+            function_list[3],
+            (driver1, driver2, year, race, q1, q2, gears),
+            results,
+            3,
+        ),
+    )
     # Start threads
     thread1.start()
     thread2.start()
     thread3.start()
+    thread4.start()
 
     # Wait for both threads to complete
     thread1.join()
     thread2.join()
     thread3.join()
+    thread4.join()
 
     return results
 

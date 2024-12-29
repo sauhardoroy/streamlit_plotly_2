@@ -13,9 +13,9 @@ from utils import (
 
 def speed_along_track_plot(d1, d2, year, race, q1, q2):
 
-    cursor = connection()
+    cursor = connection(f"{normalize_string(race.replace(' ','_'))}_{year}")
     telemetry_data = cursor.execute(
-        f"""select *  from telemetry_data_{year} 
+        f"""select *  from telemetry_data 
             where year = {year} and RaceName = '{race}' 
             and ((FullName = '{d1}' and qualification_session = '{q1}') 
             or (FullName = '{d2}' and qualification_session = '{q2}')) """
@@ -28,13 +28,10 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
 
     num_minisectors = 25
 
-    # Grab the maximum value of distance that is known in the telemetry
     total_distance = distance_max
 
-    # Generate equally sized mini-sectors
     minisector_length = total_distance / num_minisectors
 
-    # Initiate minisector variable, with 0 (meters) as a starting point.
     minisectors = [0]
 
     # Add multiples of minisector_length to the minisectors
@@ -52,12 +49,10 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
         .mean()
         .reset_index()
     )
-    # print(f"""2 \n {average_speed}""")
-    # Select the driver with the highest average speed
+
     fastest_driver = average_speed.loc[
         average_speed.groupby(["Minisector"])["Speed"].idxmax()
     ]
-    # print(f"""3 \n {fastest_driver}""")
 
     fastest_driver = fastest_driver[
         ["Minisector", "FullName", "qualification_session"]
@@ -68,15 +63,10 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
         }
     )
 
-    # Join the fastest driver per minisector with the full telemetry
     telemetry_data = telemetry_data.merge(fastest_driver, on=["Minisector"])
 
-    # Order the data by distance to make matploblib does not get confused
     telemetry_data = telemetry_data.sort_values(by=["Distance"])
-    # print(
-    #     f"""4 \n {telemetry_data[['Minisector','FullName','fastest_qualification_session','Distance']]}"""
-    # )
-    # Convert driver name to integer
+
     telemetry_data.loc[
         (telemetry_data["Fastest_driver"] == d1)
         & (telemetry_data["fastest_qualification_session"] == q1),
@@ -87,14 +77,11 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
         & (telemetry_data["fastest_qualification_session"] == q2),
         "Fastest_driver_int",
     ] = 2
-    # print(
-    #     f"telemetry with faster dirver int {telemetry_data[['Minisector','FullName','fastest_qualification_session','Distance']]}"
-    # )
-    # Prepare data
+
     x = np.array(telemetry_data["X"].values)
     y = np.array(telemetry_data["Y"].values)
     fastest_driver_array = telemetry_data["Fastest_driver_int"].to_numpy().astype(float)
-    # print("ran till 5")
+
     pc_driver1 = round(
         telemetry_data[
             (telemetry_data["Fastest_driver"] == d1)
@@ -111,53 +98,60 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
         * 100
         / telemetry_data.shape[0]
     )
-    # Add a widget in the bottom left corner to show the percentage of time each driver was fastest
-    # print(f""" pc_driver1 {pc_driver1}""")
-    # Generate line segments
-    points = np.array([x, y]).T.reshape(-1, 1, 2)
-    segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
-    # Create the color mapping
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+
     d1_colour = (
         f'#{telemetry_data[telemetry_data["FullName"] == d1]["TeamColor"].iloc[0]}'
     )
     d2_colour = (
         f'#{telemetry_data[telemetry_data["FullName"] == d2]["TeamColor"].iloc[0]}'
     )
-    # print("ran till 6")
+
     d1_colour, d2_colour = adjust_color_if_needed(d1_colour, d2_colour)
-    # print(f"Adjusted colors: {d1_colour}, {d2_colour}")
-    color_scale = [d1_colour, d2_colour]
-    # print(f"color scale {color_scale}")
+
+    color_map = {1: d1_colour, 2: d2_colour}
+
+    data = (
+        telemetry_data[
+            [
+                "X",
+                "Y",
+                "Distance",
+                "Fastest_driver",
+                "fastest_qualification_session",
+                "Fastest_driver_int",
+            ]
+        ]
+        .apply(lambda row: tuple(row), axis=1)
+        .tolist()
+    )
+
     driver1 = normalize_string(d1)
     driver2 = normalize_string(d2)
     custom_tick_labels = [f"{driver1} {q1}", f"{driver2} {q2}"]
-    # print(f"fastest driver array{fastest_driver_array}")
-    color_mapping = np.vectorize(lambda x: color_scale[int(x) - 1])(
-        fastest_driver_array
-    ).tolist()
 
     fig = go.Figure()
+    custom_tick_labels = [f"{d1} {q1}", f"{d2} {q2}"]
+    fastest_driver_array = telemetry_data["Fastest_driver_int"].to_numpy().astype(float)
 
-    # Add the line trace with color mapping
-    for i in range(len(segments)):
+    for i in range(len(data) - 1):
+        x_values = [data[i][0], data[i + 1][0]]
+        y_values = [data[i][1], data[i + 1][1]]
+        line_color = color_map[int(data[i][5])]
+
         fig.add_trace(
             go.Scatter(
-                x=[segments[i, 0, 0], segments[i, 1, 0]],
-                y=[segments[i, 0, 1], segments[i, 1, 1]],
+                x=x_values,
+                y=y_values,
                 mode="lines",
-                line=dict(
-                    color=color_mapping[i],
-                    width=5,
-                ),
+                line=dict(color=line_color, width=3),
                 hoverinfo="text",
                 text=f"Driver: {custom_tick_labels[int(fastest_driver_array[i]) - 1]}",
                 showlegend=False,
             )
         )
-
-    # Add custom legend
-    for driver, color in zip(custom_tick_labels, color_scale):
+    for driver, color in zip(custom_tick_labels, color_map.values()):
         fig.add_trace(
             go.Scatter(
                 x=[None],
@@ -169,15 +163,15 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
                 name=driver,
             )
         )
-
+    # Customize layout
     fig.update_layout(
-        title=f"Speed Over Track",
-        # margin=dict(l=20, r=50, t=30, b=20),
-        showlegend=True,
-        xaxis=dict(scaleanchor="y", scaleratio=1),  # Equal scaling
+        title="Speed Over Track",
+        # showlegend=True,
+        legend_title="Names",
         width=1000,
         height=600,
         template="plotly_white",
+        xaxis=dict(scaleanchor="y", scaleratio=1),
         legend=dict(
             x=1,
             y=0.5,
@@ -185,14 +179,15 @@ def speed_along_track_plot(d1, d2, year, race, q1, q2):
             yanchor="middle",
         ),
     )
+
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     fig.add_annotation(
         xref="paper",
         yref="paper",
-        x=0,
+        x=0.2,
         y=0.1,
-        text=f"{d1}: {pc_driver1}%<br>{d2}: {pc_driver2}%",
+        text=f"{q1} {d1}: {pc_driver1}%<br>{q2} {d2}: {pc_driver2}%",
         showarrow=False,
         align="left",
         font=dict(size=12),

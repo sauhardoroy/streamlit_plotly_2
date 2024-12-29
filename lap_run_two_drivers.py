@@ -15,14 +15,14 @@ def find_faster_slower_df(df1, df2):
     len1, len2 = df1.shape[0], df2.shape[0]
     time1, time2 = max(df1["time"]), max(df2["time"])
     if len1 >= len2 and time1 < time2:
-        time_diff_interval = int((time2 - time1) * 1000 / 250)
+        time_diff_interval = int((time2 - time1) * 1000 / 120)
         drop_indices = np.linspace(
             10, len(df1) - 15, num=time_diff_interval + len1 - len2, dtype=int
         )
         df1 = df1.drop(drop_indices).reset_index(drop=True)
         return df1, df2
     elif len1 < len2 and time1 < time2:
-        time_diff_interval = int((time2 - time1) * 1000 / 250)
+        time_diff_interval = int((time2 - time1) * 1000 / 120)
         if (len2 - len1) < time_diff_interval:
             drop_indices = np.linspace(
                 30, len(df1) - 50, num=time_diff_interval - (len2 - len1), dtype=int
@@ -30,14 +30,14 @@ def find_faster_slower_df(df1, df2):
             df1 = df1.drop(drop_indices).reset_index(drop=True)
         return df1, df2
     elif len1 <= len2 and time1 > time2:
-        time_diff_interval = int((time1 - time2) * 1000 / 250)
+        time_diff_interval = int((time1 - time2) * 1000 / 120)
         drop_indices = np.linspace(
             10, len(df2) - 15, num=time_diff_interval + len2 - len1, dtype=int
         )
         df2 = df2.drop(drop_indices).reset_index(drop=True)
         return df2, df1
     elif len1 > len2 and time1 > time2:
-        time_diff_interval = int((time1 - time2) * 1000 / 250)
+        time_diff_interval = int((time1 - time2) * 1000 / 120)
         if (len1 - len2) < time_diff_interval:
             drop_indices = np.linspace(
                 30, len(df2) - 50, num=time_diff_interval - (len1 - len2), dtype=int
@@ -48,15 +48,15 @@ def find_faster_slower_df(df1, df2):
         return df1, df2
 
 
-def lap_plot(d1, d2, year, race, q1, q2):
+def lap_plot(d1, d2, year, race, q1, q2, placeholder=None):
 
-    cursor = connection()
+    cursor = connection(f"{normalize_string(race.replace(' ','_'))}_{year}")
 
     pos_data1 = cursor.execute(
-        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from pos_data_{year} where RaceName = '{race}' and FullName = '{d1}' and qualification_session = '{q1}' """
+        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from telemetry_data where RaceName = '{race}' and FullName = '{d1}' and qualification_session = '{q1}' """
     ).fetchall()
     pos_data2 = cursor.execute(
-        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from pos_data_{year} where RaceName = '{race}' and FullName = '{d2}' and qualification_session = '{q2}' """
+        f"""select x,y, timeinsec, Abbreviation, TeamColor, qualification_session from telemetry_data where RaceName = '{race}' and FullName = '{d2}' and qualification_session = '{q2}' """
     ).fetchall()
 
     df1 = pd.DataFrame(
